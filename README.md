@@ -3,7 +3,10 @@ logParser
 
 I know this code sucks. It's my first attempt at a C++/Qt project. 
 
-This piece of software takes an access.log Apache common log file (only format supported right now). It parses every line, and outputs a report of 404 errors. 
+This piece of software takes an access.log Apache common log file (only format supported right now). It parses every line, and outputs :
+
+- a report of 404 errors
+- a report of URLs crawled by GoogleBot 
 
 For each error, you get the URL and the number of hits.
 
@@ -15,5 +18,6 @@ Feel free to contact me :)
 
 
 Didier "dodger" Sampaolo
+
 http://www.enpause.com/
 

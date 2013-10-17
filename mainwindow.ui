@@ -35,9 +35,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>40</y>
-      <width>721</width>
-      <height>231</height>
+      <y>80</y>
+      <width>341</width>
+      <height>191</height>
      </rect>
     </property>
    </widget>
@@ -67,16 +67,42 @@
      <string>&amp;Save report</string>
     </property>
    </widget>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>739</width>
-     <height>27</height>
-    </rect>
-   </property>
+   <widget class="QCheckBox" name="checkBox_err404">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>50</y>
+      <width>111</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Erreurs 404</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_GoogleBot">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>50</y>
+      <width>241</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Pages Crawlées par GoogleBot</string>
+    </property>
+   </widget>
+   <widget class="QTableView" name="tableView_GoogleBot">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>80</y>
+      <width>371</width>
+      <height>192</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -87,6 +113,16 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>739</width>
+     <height>27</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

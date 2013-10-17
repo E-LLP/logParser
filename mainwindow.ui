@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>LogParser v0.1</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../../../../Téléchargements/ZpKyf3ZBgLFQTpMM1OeLzCjBV8xta9O0_0/logparser.jpg</normaloff>../../../../Téléchargements/ZpKyf3ZBgLFQTpMM1OeLzCjBV8xta9O0_0/logparser.jpg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QPushButton" name="btnParseLogs">

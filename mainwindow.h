@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QStandardItemModel>
 
+#include "preferences.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -25,12 +27,22 @@ private slots:
 
     void add404(QRegExp);
     void add_404_to_model();
-    void save_report();
 
-    void on_pushButton_save_clicked();
+    void save_report_err404();
+    void save_report_googlebot();
+
+    void on_action_Pr_f_rences_triggered();
+
+    void on_pushButton_prefs_clicked();
+    void on_pushButton_save_err404_clicked();
+    void on_pushButton_save_googlebot_clicked();
 
 private:
     Ui::MainWindow *ui;
+
+    QHash<QString, bool> appSettings;
+
+    Preferences *myPrefs;
 
     QString apacheLogCommon; // pour la regexp
 
@@ -41,9 +53,6 @@ private:
     QHash<QString, int> hash_GoogleBot;
 
     int total_lines;
-
-    bool process_404;
-    bool process_GoogleBot;
 };
 
 #endif // MAINWINDOW_H

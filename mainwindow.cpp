@@ -7,6 +7,9 @@
 #include <QStandardItemModel>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QSettings>
+
+#include "settings.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -35,11 +38,11 @@ MainWindow::MainWindow(QWidget *parent) :
     model_GoogleBot = new QStandardItemModel(0,2,this);
     model_GoogleBot->setHorizontalHeaderItem(0, new QStandardItem(QString("URL")));
     model_GoogleBot->setHorizontalHeaderItem(1, new QStandardItem(QString("Hits")));
-//    model_GoogleBot->setHorizontalHeaderItem(2, new QStandardItem(QString("Dernier Accès")));
     ui->tableView_GoogleBot->setModel(model_GoogleBot);
 
     ui->progressBar_read->setValue(0);
-    ui->pushButton_save->setEnabled(false);
+    ui->pushButton_save_err404->setEnabled(false);
+    ui->pushButton_save_googlebot->setEnabled(false);
 
     statusBar()->showMessage("Ready", 3500);
 }
@@ -51,6 +54,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_btnParseLogs_clicked()
 {
+    settings mySettings;
+    appSettings = mySettings.Load();
+
     QString filename = QFileDialog::getOpenFileName();
 
 //    QString filename = "/home/dodger/access.log";
@@ -77,12 +83,11 @@ void MainWindow::on_btnParseLogs_clicked()
     in.seek(0);
     ui->progressBar_read->setMaximum(total_lines);
 
-    process_404 = ui->checkBox_err404->isChecked();
-    process_GoogleBot = ui->checkBox_GoogleBot->isChecked();
+    ui->tab_err404->setDisabled(!appSettings.value("action_err404"));
+    ui->tab_googlebot->setDisabled(!appSettings.value("action_googlebot"));
 
     while (!in.atEnd()) {
         read_lines++;
-
         MainWindow::parse_line(in.readLine());
 
         if (read_lines % 1000 == 0) {
@@ -96,35 +101,14 @@ void MainWindow::on_btnParseLogs_clicked()
     add_404_to_model();
     add_GoogleBot_to_model();
 
-    ui->pushButton_save->setEnabled(true);
+    ui->pushButton_save_err404->setEnabled(true);
+    ui->pushButton_save_googlebot->setEnabled(true);
 
     ui->tableView_err404->sortByColumn(1);
     ui->tableView_err404->resizeColumnsToContents();
 
     ui->tableView_GoogleBot->sortByColumn(1);
     ui->tableView_GoogleBot->resizeColumnsToContents();
-
-    QMessageBox msgBox;
-
-    QString message;
-    message  = "Nombre de lignes dans le fichier : " + QString::number(total_lines) + "\n";
-    message += "Nombre d'URLs en 404 : " + QString::number(hash_404.count());
-
-    msgBox.setText(message);
-    msgBox.setInformativeText("Enregistrer le rapport en CSV ?");
-    msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard);
-    msgBox.setDefaultButton(QMessageBox::Save);
-    int ret = msgBox.exec();
-
-    switch (ret) {
-       case QMessageBox::Save:
-            save_report();
-           break;
-       case QMessageBox::Discard:
-           break;
-       default:
-           break;
-     }
 
     qDebug() << "Lignes parsées : " << total_lines;
     qDebug() << "URLs 404 différentes : " << hash_404.count();
@@ -144,42 +128,34 @@ bool MainWindow::parse_line(QString line) {
 
     QString apacheLogParse = apacheLogCommon;
 
+    QRegExp apacheLogExp(apacheLogParse);
+    apacheLogExp.setMinimal(true);
 
-    //"-" "msnbot-media/1.1 (+http://search.msn.com/msnbot.htm)"
-
-
-//    qDebug() << "REGEXP : " << apacheLogParse;
-
-
-
-
-    QRegExp apacheLogCommonExp(apacheLogParse);
-    apacheLogCommonExp.setMinimal(true);
-
-    if (!apacheLogCommonExp.isValid()) {
-        qDebug() << apacheLogCommonExp.errorString();
+    if (!apacheLogExp.isValid()) {
+        qDebug() << apacheLogExp.errorString();
     }
 
-    if (line.contains (apacheLogCommonExp)) {
+    int res_code;
+    QString useragent;
+
+    if (line.contains (apacheLogExp)) {
+
+        if (apacheLogParse == apacheLogCommon) {
+            res_code = apacheLogExp.cap(8).toInt();
+            useragent = apacheLogExp.cap(11);
+        }
 
 //        qDebug() << "9 : " << apacheLogCommonExp.cap(9);
 //        qDebug() << "8 : " << apacheLogCommonExp.cap(8);
 //        qDebug() << "10 : " << apacheLogCommonExp.cap(10);
 //        qDebug() << "11 : " << apacheLogCommonExp.cap(11);
 
-        if (process_404) {
-            int res_code = apacheLogCommonExp.cap(8).toInt();
-            if (res_code == 404) {
-                add404(apacheLogCommonExp);
-            }
+        if (appSettings.value("action_err404") && res_code == 404) {
+            add404(apacheLogExp);
         }
 
-        if (process_GoogleBot) {
-            QString useragent = apacheLogCommonExp.cap(11);
-
-            if (useragent.indexOf("Googlebot") != -1) {
-                addGoogleBot(apacheLogCommonExp);
-            }
+        if (appSettings.value("action_googlebot") && useragent.indexOf("Googlebot") != -1) {
+            addGoogleBot(apacheLogExp);
         }
     }
 
@@ -220,7 +196,7 @@ void MainWindow::addGoogleBot(QRegExp exp) {
     hash_GoogleBot.insert(url, counter);
 }
 
-void MainWindow::save_report() {
+void MainWindow::save_report_err404() {
     QString filename = QFileDialog::getSaveFileName();
     qDebug() << "Saving to : " << filename;
 
@@ -241,9 +217,25 @@ void MainWindow::save_report() {
     file.close();
 }
 
-void MainWindow::on_pushButton_save_clicked()
-{
-    save_report();
+void MainWindow::save_report_googlebot() {
+    QString filename = QFileDialog::getSaveFileName();
+    qDebug() << "Saving to : " << filename;
+
+    QFile file(filename);
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream out(&file);
+
+    QHashIterator<QString, int> i(hash_GoogleBot);
+    while (i.hasNext()) {
+        i.next();
+
+        out << i.key();
+        out << ";";
+        out << i.value();
+        out << "\n";
+    }
+
+    file.close();
 }
 
 void MainWindow::add_GoogleBot_to_model() {
@@ -276,4 +268,26 @@ void MainWindow::add_404_to_model() {
 
         model_404->appendRow(listToAdd);
     }
+}
+
+void MainWindow::on_action_Pr_f_rences_triggered()
+{
+    myPrefs = new Preferences(this);
+    myPrefs->show();
+}
+
+void MainWindow::on_pushButton_prefs_clicked()
+{
+    myPrefs = new Preferences(this);
+    myPrefs->show();
+}
+
+void MainWindow::on_pushButton_save_err404_clicked()
+{
+    save_report_err404();
+}
+
+void MainWindow::on_pushButton_save_googlebot_clicked()
+{
+    save_report_googlebot();
 }

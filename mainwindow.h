@@ -44,10 +44,6 @@ private:
 
     QHash<QString, bool> appSettings;
 
-    QString apacheLogCommon;    // pour le pattern de la regexp "common"
-    QString apacheLogParse;     // pour le pattern de la regexp sélectionnée
-    QRegExp apacheLogExp;       // pour la regexp compilée
-
     QStandardItemModel *model_404;
     QStandardItemModel *model_GoogleBot;
 
@@ -55,6 +51,8 @@ private:
     QHash<QString, int> hash_GoogleBot;
 
     int total_lines;
+
+    QRegExp apacheLogExp;
 };
 
 #endif // MAINWINDOW_H

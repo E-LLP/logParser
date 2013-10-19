@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QFile>
 #include <QTextStream>
-//#include <QDebug>
+#include <QDebug>
 #include <QStringBuilder>
 #include <QStandardItemModel>
 #include <QFileDialog>
@@ -26,14 +26,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->checkBox_Bots->setChecked(appSettings.value("action_allbots"));
     ui->checkBox_Bots->setDisabled(true);
 
-    // prepare regexp
-    apacheLogCommon = "(.*) (.*) (.*) \\[(.*)\\] \"(.*) (.*) (.*)\" (.*) (.*) \"(.*)\" \"(.*)\"";
-    QString apacheLogParse = apacheLogCommon;
-    QRegExp apacheLogExp(apacheLogParse);
-    apacheLogExp.setMinimal(true);
-//    if (!apacheLogExp.isValid()) {
-//        qDebug() << apacheLogExp.errorString();
-//    }
 
     // 404
     model_404 = new QStandardItemModel(0,2,this);
@@ -66,18 +58,19 @@ void MainWindow::on_btnParseLogs_clicked()
     settings mySettings;
     appSettings = mySettings.Load();
 
-    QString filename = QFileDialog::getOpenFileName();
-//    QString filename = "/home/dodger/access.short.log";
+//    QString filename = QFileDialog::getOpenFileName();
+    QString filename = "/home/dodger/access.short.log";
     if (filename == "") {
         return;
     }
+    QFile file(filename);
+
+    ui->tab_err404->setDisabled(!appSettings.value("action_err404"));
+    ui->tab_googlebot->setDisabled(!appSettings.value("action_googlebot"));
+    ui->btnParseLogs->setEnabled(false);
 
     QTime t;
     t.start();
-
-    ui->btnParseLogs->setEnabled(false);
-
-    QFile file(filename);
 
     int total_lines = 0;
     int read_lines = 0;
@@ -92,20 +85,17 @@ void MainWindow::on_btnParseLogs_clicked()
         total_lines++;
     }
 
-    // on retourne au début
-    in.seek(0);
-
     ui->progressBar_read->setMaximum(total_lines);
 
-    ui->tab_err404->setDisabled(!appSettings.value("action_err404"));
-    ui->tab_googlebot->setDisabled(!appSettings.value("action_googlebot"));
+    // on retourne au début
+    in.seek(0);
 
     // deuxième passe pour parser les lignes
     while (!in.atEnd()) {
         read_lines++;
-        MainWindow::parse_line(in.readLine());
+        parse_line(in.readLine());
 
-        if (read_lines % 1500 == 0) {
+        if (read_lines % 1000 == 0) {
             QString message = "Ligne " % QString::number(read_lines) % " sur " % QString::number(total_lines);
             statusBar()->showMessage(message, 1000);
         }
@@ -131,7 +121,7 @@ void MainWindow::on_btnParseLogs_clicked()
 //    qDebug() << "URLs 404 différentes : " << hash_404.count();
 //    qDebug() << "URLs GoogleBot différentes : " << hash_GoogleBot.count();
 
-//    qDebug() << "Elapsed : " << elapsed;
+    qDebug() << "Elapsed : " << elapsed;
 }
 
 bool MainWindow::parse_line(QString line) {
@@ -148,17 +138,33 @@ bool MainWindow::parse_line(QString line) {
     int res_code;
     QString useragent;
 
-    if (line.contains (apacheLogExp)) {
+    // prepare regexp
+    QString apacheLogCommon = "(.*) (.*) (.*) \\[(.*)\\] \"(.*) (.*) (.*)\" (.*) (.*) \"(.*)\" \"(.*)\"";
+    QString apacheLogParse = apacheLogCommon;
+    QRegExp apacheLogExp(apacheLogParse);
+    apacheLogExp.setMinimal(true);
 
-        if (apacheLogParse == apacheLogCommon) {
-            res_code = apacheLogExp.cap(8).toInt();
-            useragent = apacheLogExp.cap(11);
-        }
+    if (!apacheLogExp.isValid()) {
+        qDebug() << apacheLogExp.errorString();
+        exit(EXIT_FAILURE);
+    }
 
-//        qDebug() << "9 : " << apacheLogCommonExp.cap(9);
-//        qDebug() << "8 : " << apacheLogCommonExp.cap(8);
-//        qDebug() << "10 : " << apacheLogCommonExp.cap(10);
-//        qDebug() << "11 : " << apacheLogCommonExp.cap(11);
+    if (line.contains(apacheLogExp)) {
+
+//        if (apacheLogParse == apacheLogCommon) {
+
+        res_code = apacheLogExp.cap(8).toInt();
+        useragent = apacheLogExp.cap(11);
+//        }
+//        qDebug() << "line : " << line;
+
+//        qDebug() << "0 : " << apacheLogExp.cap(0);
+//        qDebug() << "1 : " << apacheLogExp.cap(1);
+
+//        qDebug() << "8 : " << apacheLogExp.cap(8);
+//        qDebug() << "9 : " << apacheLogExp.cap(9);
+//        qDebug() << "10 : " << apacheLogExp.cap(10);
+//        qDebug() << "11 : " << apacheLogExp.cap(11);
 
         if (appSettings.value("action_err404") && res_code == 404) {
             add404(apacheLogExp);
@@ -274,6 +280,8 @@ void MainWindow::add_404_to_model() {
         QStandardItem *item2 = new QStandardItem(QString::number(i.value()));
 
         listToAdd << item1 << item2;
+
+        qDebug() << item1;
 
         model_404->appendRow(listToAdd);
     }

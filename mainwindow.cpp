@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QFile>
 #include <QTextStream>
-#include <QDebug>
+//#include <QDebug>
 #include <QStringBuilder>
 #include <QStandardItemModel>
 #include <QFileDialog>
@@ -18,17 +18,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    // test worker
-//    TaskLogLine myLogLine(QString("test"));
-//    myLogLine.setAutoDelete(false);
-
-//    QThreadPool *threadPool = QThreadPool::globalInstance();
-//    threadPool->start(&myLogLine);
-//    qDebug() << "hello from GUI thread " << QThread::currentThread();
-//    threadPool->waitForDone();
-
-//    exit(EXIT_SUCCESS);
-
     // load settings
     settings mySettings;
     QHash<QString, bool> appSettings = mySettings.Load();
@@ -37,23 +26,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->checkBox_Bots->setChecked(appSettings.value("action_allbots"));
     ui->checkBox_Bots->setDisabled(true);
 
-//    apacheLogCommon = apacheLogCommon % "(.*) (.*) (.*) ";              // ip, caca et re-caca (tirets)
-//    apacheLogCommon = apacheLogCommon % "\\[(.*)\\] ";        // date
-//    apacheLogCommon = apacheLogCommon % "\"(.*) (.*) (.*)\""; // method, url, protocol
-//    apacheLogCommon = apacheLogCommon % " (.*) "; // http_code
-//    apacheLogCommon = apacheLogCommon % "(.*) "; // nombre de bytes
-//    apacheLogCommon = apacheLogCommon % "\"(.*)\" "; // referer
-//    apacheLogCommon = apacheLogCommon % "\"(.*)\""; // user-agent
+    // prepare regexp
     apacheLogCommon = "(.*) (.*) (.*) \\[(.*)\\] \"(.*) (.*) (.*)\" (.*) (.*) \"(.*)\" \"(.*)\"";
-
     QString apacheLogParse = apacheLogCommon;
-
     QRegExp apacheLogExp(apacheLogParse);
     apacheLogExp.setMinimal(true);
-
-    if (!apacheLogExp.isValid()) {
-        qDebug() << apacheLogExp.errorString();
-    }
+//    if (!apacheLogExp.isValid()) {
+//        qDebug() << apacheLogExp.errorString();
+//    }
 
     // 404
     model_404 = new QStandardItemModel(0,2,this);
@@ -73,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_save_err404->setEnabled(false);
     ui->pushButton_save_googlebot->setEnabled(false);
 
-    statusBar()->showMessage("Ready", 3500);
+    statusBar()->showMessage("Prêt", 3500);
 }
 
 MainWindow::~MainWindow()
@@ -86,8 +66,8 @@ void MainWindow::on_btnParseLogs_clicked()
     settings mySettings;
     appSettings = mySettings.Load();
 
-//    QString filename = QFileDialog::getOpenFileName();
-    QString filename = "/home/dodger/access.short.log";
+    QString filename = QFileDialog::getOpenFileName();
+//    QString filename = "/home/dodger/access.short.log";
     if (filename == "") {
         return;
     }
@@ -151,7 +131,7 @@ void MainWindow::on_btnParseLogs_clicked()
 //    qDebug() << "URLs 404 différentes : " << hash_404.count();
 //    qDebug() << "URLs GoogleBot différentes : " << hash_GoogleBot.count();
 
-    qDebug() << "Elapsed : " << elapsed;
+//    qDebug() << "Elapsed : " << elapsed;
 }
 
 bool MainWindow::parse_line(QString line) {
@@ -228,7 +208,6 @@ void MainWindow::addGoogleBot(QRegExp exp) {
 
 void MainWindow::save_report_err404() {
     QString filename = QFileDialog::getSaveFileName();
-    qDebug() << "Saving to : " << filename;
 
     QFile file(filename);
     file.open(QIODevice::WriteOnly | QIODevice::Text);
@@ -249,7 +228,7 @@ void MainWindow::save_report_err404() {
 
 void MainWindow::save_report_googlebot() {
     QString filename = QFileDialog::getSaveFileName();
-    qDebug() << "Saving to : " << filename;
+//    qDebug() << "Saving to : " << filename;
 
     QFile file(filename);
     file.open(QIODevice::WriteOnly | QIODevice::Text);

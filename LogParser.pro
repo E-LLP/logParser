@@ -19,5 +19,4 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     settings.h
 
-FORMS    += mainwindow.ui \
-    preferences.ui
+FORMS    += mainwindow.ui

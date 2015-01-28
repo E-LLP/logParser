@@ -18,6 +18,5 @@ Feel free to contact me :)
 
 
 Didier "dodger" Sampaolo
-
-http://www.enpause.com/
+http://www.didcode.com/
 
